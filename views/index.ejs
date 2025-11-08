@@ -25,7 +25,7 @@
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
           <span class="badge bg-primary">Lab 2</span>
-          <span class="badge bg-secondary">SQLi</span>
+          <span class="badge bg-secondary">SQLi / Broken Auth</span>
         </div>
       </div>
     </header>
@@ -183,7 +183,7 @@
                   <p class="mb-1"><strong>Loše:</strong> Korištenje predvidljivih session ID-a ili slanje reset tokena bez isteka.</p>
                   <p class="mb-1"><strong>Dobro:</strong> Koristiti sigurne, kriptografski generirane token-e, postaviti ograničenja pokušaja prijave, obavezati složene lozinke i osigurati siguran proces resetiranja lozinke.</p>
 
-                  <p class="small mt-2">Napomena: ako želite da ova stranica demonstrira Broken Authentication aktivno, mogu ostaviti HTML elemente/formulare koje ćete kasnije povezati u `server.js` — trenutno prikazujem samo objašnjenje po vašoj želji.</p>
+                  <p class="small mt-2">Broken Authentication koji je implementiran u ovom primjeru uključuje neograničen broj pokušaja prijave i deskriptivnu poruku koja odaje radi li se o neispravnom korisničkom imenu ili lozinki.</p>
 
                   <hr>
                   <p class="foot">Više: <a href="https://owasp.org/Top10/A02_2021-Broken_Authentication/" target="_blank" rel="noopener">OWASP Broken Authentication</a></p>

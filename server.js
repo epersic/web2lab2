@@ -2,11 +2,14 @@ const express = require('express');
 const app = express();
 const client = require('./db');
 const path = require('path');
+const { time } = require('console');
 
 const PORT = process.env.PORT || 3000;
 
 
 let ipLoginAttempts = {};
+
+let ipTimeouts = {};
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -77,9 +80,14 @@ app.post('/login', (req, res) => {
 
     if (!authVulnerable) {
         if (ipLoginAttempts[req.ip] && ipLoginAttempts[req.ip] >= 5) {
+            if (Date.now() > ipTimeouts[req.ip]) {
+                ipLoginAttempts[req.ip] = 0;
+                ipTimeouts[req.ip] = null;
+            }else{
             console.log(ipLoginAttempts[req.ip]);
-            mess = "Previše neuspješnih pokušaja prijave. Pokušajte ponovo kasnije.";
+            mess = "Previše neuspješnih pokušaja prijave. Pokušajte ponovo za " + Math.ceil((ipTimeouts[req.ip] - Date.now()) / 1000) + " sekundi.";
             return res.render('index', { authRes: mess, authVulnerable });
+            }
         }
     }
 
@@ -99,6 +107,9 @@ app.post('/login', (req, res) => {
         } else {
             ipLoginAttempts[req.ip] = (ipLoginAttempts[req.ip] || 0) + 1;
             console.log(ipLoginAttempts[req.ip]);
+            if(ipLoginAttempts[req.ip] == 5) {
+                ipTimeouts[req.ip]=Date.now() + 5*60*1000; // 5 minutes lockout
+            }
             mess = "Neispravno korisničko ime ili lozinka.\n Preostali pokušaji prijave: " + (5 - ipLoginAttempts[req.ip]);
         }
         return res.render('index', { authRes: mess, authVulnerable });
