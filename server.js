@@ -3,6 +3,8 @@ const app = express();
 const client = require('./db');
 const path = require('path');
 
+const PORT = process.env.PORT || 3000;
+
 
 let ipLoginAttempts = {};
 
@@ -18,8 +20,8 @@ app.get('/', (req, res) => {
 });
 
 // Start the server after routes/middleware are configured
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
 
 
