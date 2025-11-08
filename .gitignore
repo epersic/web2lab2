@@ -1,0 +1,4 @@
+.env
+# Optional: common ignores
+node_modules/
+.DS_Store

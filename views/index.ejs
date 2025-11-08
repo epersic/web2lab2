@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab 2</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { background: #f6f9fc; }
+      .hero { padding: 3rem 1rem; }
+      .card-sql { border-left: 6px solid #0d6efd; }
+      pre.payload { background: #0b1220; color: #d1e7ff; padding: .5rem; border-radius: .25rem; }
+      .muted { color: #6c757d; }
+      .foot { font-size: .85rem; color: #6c757d; }
+    </style>
+  </head>
+  <body>
+    <header class="container hero">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="mb-1">Lab 2 - Sigurnost</h1>
+          <p class="lead mb-0">Web stranica koja praktično demonstrira SQLi i Broken Authentication ranjivosti</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <span class="badge bg-primary">Lab 2</span>
+          <span class="badge bg-secondary">SQLi</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="row gy-4">
+        <div class="col-lg-7">
+          <div class="card shadow-sm card-sql">
+            <div class="card-body">
+              <h5 class="card-title">SQL Injection</h5>
+              <p class="card-text">Unesite pojam za pretraživanje ili payload za injekciju. Backend će obraditi zahtjev. Koristite prekidač za uključivanje/isključivanje ranjivog načina rada (zadržava izvorne nazive obrazaca kako bi poslužiteljski kod nastavio raditi).</p>
+              <p class="card-text">Poznata korisnička imena: Maja, Dino, Eno te jedno skriveno</p>
+              <form action="/users" method="post" class="row g-2 align-items-center" id="sqli-form">
+                <div class="col-sm-8">
+                  <label for="q" class="form-label visually-hidden">Search</label>
+                  <input id="q" name="q" type="text" class="form-control" placeholder="Unesi korisničko ime ili SQLi" autocomplete="off" value="<%= typeof q !== 'undefined' ? q : '' %>">
+                </div>
+                <div class="col-auto">
+                  <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+                <div class="col-12 mt-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="vulnerable" name="vulnerable" <%= typeof vulnerable !== 'undefined' && vulnerable ? 'checked' : '' %>>
+                    <label class="form-check-label" for="vulnerable" id="vuln-label">Ranjivost: <%= typeof vulnerable !== 'undefined' && vulnerable ? 'ON' : 'OFF' %></label>
+                  </div>
+                </div>
+              </form>
+
+              <!-- Results rendered here when server returns data -->
+              <% if (typeof results !== 'undefined') { %>
+                <div class="mt-3">
+                  <% if (error) { %>
+                    <div class="alert alert-danger">Error u zadnjem upitu: <%= error %></div>
+                  <% } else if (!results || results.length === 0) { %>
+                    <div class="alert alert-warning">No results found.</div>
+                  <% } else { %>
+                    <div class="table-responsive mt-2">
+                      <table class="table table-sm table-striped">
+                        <thead><tr><th>Query rezultat:</th></tr></thead>
+                        <tbody>
+                          <% results.forEach(function(row){ %>
+                            <tr>
+                              <td><%= JSON.stringify(row) %></td>
+                              
+                            </tr>
+                          <% }) %>
+                        </tbody>
+                      </table>
+                    </div>
+                  <% } %>
+                  <% if (executedQuery) { %>
+                    <p class="small text-muted mt-2">Executed SQL: <code><%= executedQuery %></code></p>
+                  <% } %>
+                </div>
+              <% } %>
+
+              <hr>
+              <h6>SQLi payloads</h6>
+              <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline-secondary payload-btn" data-payload="' OR '1'='1">' OR '1'='1</button>
+                <button class="btn btn-sm btn-outline-secondary payload-btn" data-payload="' OR 1=1 -- ">' OR 1=1 --</button>
+                <button class="btn btn-sm btn-outline-secondary payload-btn" data-payload="Admin' -- ">Admin' --</button>
+                <button class="btn btn-sm btn-outline-secondary payload-btn" data-payload="' UNION SELECT userid,password FROM users -- - ">' UNION SELECT userid,password FROM users -- -</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Broken Authentication demo card (UI only) -->
+          <div class="card shadow-sm mt-4">
+            <div class="card-body">
+              <h5 class="card-title">Broken Authentication</h5>
+              <p class="card-text">Kada je ranjivost uključena postoje mogućnosti za napad. Prva ranjivost je deskriptivna poruka prilikom prijave (javlja je li neispravna lozinka, korisničko ime ili oboje), a druga u mogućnosti "bruteforce" napada. </br>Ukoliko je ranjivost isključena IP adresa je blokirana nakon 5 neuspješnih pokušaja prijave na sat vremena.</p>
+              <p class="card-text">Za testiranje "brute-force" napada koristite listu <a href="/usersList">korisničkih imena</a> i <a href="/pass">lozinki</a>.</p>
+              <form action="/login" method="post" class="row g-2 align-items-center" id="auth-form">
+                <div class="col-sm-5">
+                  <label for="login_username" class="form-label visually-hidden">Username</label>
+                  <input id="login_username" name="username" type="text" class="form-control" placeholder="Korisničko ime" autocomplete="off" value="">
+                </div>
+                <div class="col-sm-5">
+                  <label for="login_password" class="form-label visually-hidden">Password</label>
+                  <input id="login_password" name="password" type="password" class="form-control" placeholder="Lozinka" autocomplete="off" value="">
+                </div>
+                <div class="col-auto">
+                  <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+                <div class="col-12 mt-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="authVulnerable" name="authVulnerable" <%= typeof authVulnerable !== 'undefined' && authVulnerable ? 'checked' : '' %>>
+                    <label class="form-check-label" for="authVulnerable" id="auth-vuln-label">Ranjivost (auth): <%= typeof authVulnerable !== 'undefined' && authVulnerable ? 'ON' : 'OFF' %></label>
+                  </div>
+                </div>
+              </form>
+                <% if (typeof authRes !== 'undefined') { %>
+                    <div class="mt-3">
+                    <div class="alert alert-info">Rezultat prijave: <%= authRes %></div>
+                </div>
+                <% } %>
+              <hr>
+              <h6>Quick creds</h6>
+              <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline-secondary auth-fill" data-user="Pogrešni" data-pass="kredencijali">Pogrešni / kredencijali</button>
+                <button class="btn btn-sm btn-outline-secondary auth-fill" data-user="auth-admin" data-pass="MyPassword123!">auth-admin / MyPassword123!</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs" id="infoTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="sqli-tab" data-bs-toggle="tab" data-bs-target="#sqli" type="button" role="tab" aria-controls="sqli" aria-selected="true">SQL Injection</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="auth-tab" data-bs-toggle="tab" data-bs-target="#auth" type="button" role="tab" aria-controls="auth" aria-selected="false">Broken Authentication</button>
+                </li>
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content pt-3">
+                <div class="tab-pane fade show active" id="sqli" role="tabpanel" aria-labelledby="sqli-tab">
+                  <h5 class="card-title">Što je SQL Injection?</h5>
+                  <p class="card-text">SQL Injection je tehnika napada koja iskorištava nepravilno rukovanje korisničkim unosom u upitima prema bazi podataka. Ako se unosi izravno spajaju u SQL izjave, napadač može promijeniti značenje upita.</p>
+
+                  <h6>Primjer</h6>
+                  <p class="mb-1"><strong>Sigurno (parametrizirano):</strong></p>
+                  <pre class="payload">SELECT * FROM users WHERE username = ?</pre>
+                  <p class="mb-1"><strong>Ranjivo (konkatenirano):</strong></p>
+                  <pre class="payload">"SELECT * FROM users WHERE username = '" + userInput + "'"</pre>
+
+                  <h6 class="mt-3">Primjer</h6>
+                  <p class="small">Kliknite na brzi payload za popunjavanje unosa. Prebacite ranjivost i pošaljite kako biste vidjeli razlike u odgovorima backend-a laboratorija.</p>
+
+                  <hr>
+                  <p class="foot">Više: <a href="https://owasp.org/www-community/attacks/SQL_Injection" target="_blank" rel="noopener">OWASP SQL Injection</a></p>
+                </div>
+
+                <div class="tab-pane fade" id="auth" role="tabpanel" aria-labelledby="auth-tab">
+                  <h5 class="card-title">Što je Broken Authentication?</h5>
+                  <p class="card-text">Broken Authentication (neispravna ili lomljena autentikacija) označava slabosti u implementaciji prijave/autorizacije koje omogućuju napadaču da preskoči autentikaciju, preuzme tuđe račune ili održava neovlašteni pristup.</p>
+
+                  <h6>Uobičajeni uzroci</h6>
+                  <ul>
+                    <li>Slabi ili predvidljivi tokeni/sesije</li>
+                    <li>Nedostatak ograničenja pokušaja prijave (brute-force)</li>
+                    <li>Nezaštićeni reset lozinke (nesigurni tokeni u e‑mailu)</li>
+                    <li>Izlaganje sesijskih ID-a preko URL-a ili u logovima</li>
+                    <li>Nevažeće isteka sesije i ponovna upotreba tokena</li>
+                  </ul>
+
+                  <h6>Primjeri i preporuke</h6>
+                  <p class="mb-1"><strong>Loše:</strong> Korištenje predvidljivih session ID-a ili slanje reset tokena bez isteka.</p>
+                  <p class="mb-1"><strong>Dobro:</strong> Koristiti sigurne, kriptografski generirane token-e, postaviti ograničenja pokušaja prijave, obavezati složene lozinke i osigurati siguran proces resetiranja lozinke.</p>
+
+                  <p class="small mt-2">Napomena: ako želite da ova stranica demonstrira Broken Authentication aktivno, mogu ostaviti HTML elemente/formulare koje ćete kasnije povezati u `server.js` — trenutno prikazujem samo objašnjenje po vašoj želji.</p>
+
+                  <hr>
+                  <p class="foot">Više: <a href="https://owasp.org/Top10/A02_2021-Broken_Authentication/" target="_blank" rel="noopener">OWASP Broken Authentication</a></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="container mt-5 mb-5 text-center muted">
+      <div class="small">Za 2. laboratorijsku vježbu — koristite odgovorno u ovom okruženju.</div>
+    </footer>
+
+    <script>
+      // Toggle label text for the SQLi vulnerability switch
+      const vulnCheckbox = document.getElementById('vulnerable');
+      const vulnLabel = document.getElementById('vuln-label');
+      if (vulnCheckbox && vulnLabel) {
+        vulnCheckbox.addEventListener('change', () => {
+          vulnLabel.textContent = 'Vulnerability: ' + (vulnCheckbox.checked ? 'ON' : 'OFF');
+        });
+      }
+
+      // Fill input with payload buttons (SQLi)
+      document.querySelectorAll('.payload-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const qInput = document.getElementById('q');
+          if (qInput) qInput.value = btn.getAttribute('data-payload');
+        });
+      });
+
+      // Toggle label text for the auth vulnerability switch
+      const authCheckbox = document.getElementById('authVulnerable');
+      const authLabel = document.getElementById('auth-vuln-label');
+      if (authCheckbox && authLabel) {
+        authCheckbox.addEventListener('change', () => {
+          authLabel.textContent = 'Ranjivost (auth): ' + (authCheckbox.checked ? 'ON' : 'OFF');
+        });
+      }
+
+      // Quick-fill auth credentials
+      document.querySelectorAll('.auth-fill').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const user = btn.getAttribute('data-user');
+          const pass = btn.getAttribute('data-pass');
+          const uInput = document.getElementById('login_username');
+          const pInput = document.getElementById('login_password');
+          if (uInput) uInput.value = user || '';
+          if (pInput) pInput.value = pass || '';
+        });
+      });
+    </script>
+    <!-- Bootstrap bundle (optional for some components) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
